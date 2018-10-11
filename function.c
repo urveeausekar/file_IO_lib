@@ -16,7 +16,7 @@ File *Fopen(const char *path, const char *mode){
 		return NULL;
 	switch(*mode){
 		case 'r':
-			if(*(mode + 1) == '\0'){
+			if(*(mode + 1) == '\0' || (*(mode + 1) == 'b' && *(mode + 2) == '\0')){
 				fd = open(path, O_RDONLY);
 				fp -> flag = R;
 			}
@@ -28,24 +28,24 @@ File *Fopen(const char *path, const char *mode){
 				fp -> flag = EOF;
 			break;
 		case 'w':
-			if(*(mode + 1) == '\0'){
-				fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+			if(*(mode + 1) == '\0' || (*(mode + 1) == 'b' && *(mode + 2) == '\0')){
+				fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = W;
 			}
 			else if(*(mode + 1) == '+'){
-				fd = open(path, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+				fd = open(path, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = WP;
 			}
 			else
 				fp -> flag = EOF;
 			break;
 		case 'a':
-			if(*(mode + 1) == '\0'){
-				fd = open(path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+			if(*(mode + 1) == '\0' || (*(mode + 1) == 'b' && *(mode + 2) == '\0')){
+				fd = open(path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = A;
 			}
 			else if(*(mode + 1) == '+'){
-				fd = open(path, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+				fd = open(path, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = AP;
 			}
 			else
@@ -64,6 +64,7 @@ File *Fopen(const char *path, const char *mode){
 		fprintf(stderr,"Invalid Mode");//check if this works.
 		return NULL;
 	}
+	fp -> bufornot = '\0';
 	fp -> fd = fd;
 	fp -> buf = NULL;
 	fp -> next = NULL;
@@ -75,7 +76,7 @@ int buffill(File *fp){
 	int r = INT_MIN;
 	if(fp -> bufornot == 'u')//if stream is unbuffered, return 
 		return 1;
-	if(fp -> flag == R && fp -> buf == NULL){
+	if((fp -> flag == R || fp -> flag == RP || fp -> flag == AP || fp -> flag == WP) && fp -> buf == NULL){
 		fp -> buf = malloc(BUFSIZE);
 		if(fp -> buf == NULL){  /*can't get buffer, so try unbuffered*/
 			fp -> bufornot = 'u';
@@ -88,7 +89,7 @@ int buffill(File *fp){
 		//if(r == 0)
 			//fp -> flag = EOF;
 	}
-	else if(fp -> flag == R && fp -> left == 0){
+	else if((fp -> flag == R || fp -> flag == RP || fp -> flag == AP || fp -> flag == WP)  && fp -> left == 0){
 		r = read(fp -> fd, fp -> buf, BUFSIZE);
 		fp -> left = r;
 		fp -> next = fp -> buf;
@@ -98,6 +99,30 @@ int buffill(File *fp){
 	return r;		
 }
 
+/*writes everything in buffer to file*///what will you do if there is a write error?
+int bufflush(File *fp){
+	int w = 0;
+	if(fp -> bufornot == 'u')//If stream is unbuffered, return;
+		return 1;
+	if((fp -> flag == W || fp -> flag == A || fp -> flag == RP || fp -> flag == AP || fp -> flag == WP) && fp -> buf == NULL){
+		fp -> buf = malloc(BUFSIZE);
+		if(fp -> buf == NULL){  /*can't get buffer, so just do it without buffer*/
+			fp -> bufornot = 'u';
+			return INT_MIN;
+		}
+		fp -> left = BUFSIZE;
+		fp -> next = fp -> buf;
+	}
+	else if(fp -> flag == W || fp -> flag == A || fp -> flag == RP || fp -> flag == AP || fp -> flag == WP){
+		w = write(fp -> fd, fp -> buf, BUFSIZE - fp -> left);
+		if(w < BUFSIZE - fp -> left)
+			fp -> flag = EOF;
+		fp -> left = BUFSIZE;
+		fp -> next = fp -> buf;
+	}
+	return 1;
+}
+
 unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp){
 	long toberead = size * nmem;
 	int r = 0;
@@ -105,9 +130,7 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	if(toberead > BUFSIZE){
 		//dosomething maybe unbuffer
 	}
-	if(fp -> flag == RP || fp -> flag == WP || fp -> flag == AP){
-		fp -> last = 'r';
-	}
+	fp -> last = 'r';
 	if(fp == &ptrarr[0]){
 		fp -> bufornot = 'u';
 	}
@@ -136,5 +159,34 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	fp -> next = fp -> next + toberead;
 	fp -> left = fp -> left - toberead;
 	return toberead / size;	
+}
+
+
+unsigned long Fwrite(void *ptr, unsigned long size, unsigned long nmem, File *fp){
+	long towrite = size * nmem;
+	int i = 0;
+	fp -> last = 'w';
+	if(fp == &(ptrarr[2]) || fp == &(ptrarr[1])){
+		fp -> bufornot = 'u';
+	}
+	if(fp -> buf == NULL || fp -> left == 0){
+		i = bufflush(fp);
+		if(/*i == INT_MIN || */fp -> flag == EOF)
+			return 0;
+	}
+	if(fp -> bufornot == 'u'){
+		int wr = write(fp -> fd, ptr, towrite);
+		if(wr < towrite){
+			/*this is write error*/
+                	fp -> flag = EOF;
+		}
+		return wr / size;
+	}
+	if(towrite > fp -> left)
+		i = bufflush(fp);
+	void *r = memmove(fp -> next, ptr, towrite);
+	fp -> next = fp -> next + towrite;
+	fp -> left = fp -> left - towrite;
+	return towrite / size; 
 }
 
