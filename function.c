@@ -190,3 +190,19 @@ unsigned long Fwrite(void *ptr, unsigned long size, unsigned long nmem, File *fp
 	return towrite / size; 
 }
 
+int Fclose(File *fp){
+	//*(fp -> next) = '\0';
+	//fp -> next = fp -> next + 1;
+	//fp -> left = fp -> left - 1;
+	bufflush(fp);
+	close(fp -> fd);
+	free(fp -> buf);
+	//free(fp);
+	fp -> buf = NULL;
+	fp -> next = NULL;
+	fp -> left = 0;
+	fp -> bufornot = '\0';
+	if(fp -> flag == EOF)
+		return -1;
+	return 1;
+}
