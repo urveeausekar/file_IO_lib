@@ -302,3 +302,34 @@ int Fseek(File *fp, long pos, int whence){
 	return 0;
 }
 
+int Feof(File *fp){
+	return (fp -> flag == EnOF);
+}
+
+int Fsetpos(File *fp, Fpos_t *position){
+	if(position == NULL)
+		return -1;
+	int r = 20;
+	r = Fseek(fp, position -> p, SEEK_SET);
+	if(r == 0)
+		return 0;
+	else
+		return -1;
+}
+int Fgetpos(File *fp, Fpos_t *position){
+	if(position == NULL)
+		return -1;
+	position -> p = Ftell(fp);
+	if(position -> p == -1)
+		return -1;
+	else 
+		return 0;
+}
+
+int Fflush(File *fp){
+	int r = bufflush(fp);
+	if(r == 1)
+		return 0;
+	else
+		return ENDF;   /*returns -1 on error*/
+}
