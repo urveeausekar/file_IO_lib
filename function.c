@@ -36,7 +36,7 @@ File *Fopen(const char *path, const char *mode){
 				fd = open(path, O_RDONLY);
 				fp -> flag = R;
 			}
-			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == b && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
+			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == 'b' && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
 				fd = open(path, O_RDWR);
 				fp -> flag = RP;
 			}
@@ -48,7 +48,7 @@ File *Fopen(const char *path, const char *mode){
 				fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = W;
 			}
-			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == b && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
+			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == 'b' && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
 				fd = open(path, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = WP;
 			}
@@ -60,7 +60,7 @@ File *Fopen(const char *path, const char *mode){
 				fd = open(path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = A;
 			}
-			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == b && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
+			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == 'b' && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
 				fd = open(path, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 				fp -> flag = AP;
 			}
@@ -149,7 +149,6 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	void *tr;
 	if(fp -> flag == EnOF)
 		return 0;
-	printf("In read\n");
 	/*If size of buffer is less than amount to be read , it is better to call read
 	directly rather than call buffill() n number of times, because each buffill() will call read once*/
 	
@@ -163,7 +162,6 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	if(fp -> left == 0 || fp -> buf == NULL)//what
 		 r = buffill(fp);
 	if(/*r == INT_MIN || */fp -> flag == EnOF){
-		printf("enof set\n");
 		return 0;
 	}
 		
@@ -192,14 +190,6 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	tr = memmove(ptr, fp -> next, toberead);
 	fp -> next = fp -> next + toberead;
 	fp -> left = fp -> left - toberead;
-	if(fp -> next == NULL)
-		printf("next is null\n");
-	if(fp -> buf == NULL)
-		printf("buf is null\n");
-	//*(fp -> next) = '\0';
-	//printf("%s\n", fp -> buf);
-	
-	printf("Toberead/size = %ld\n", toberead / size);
 	return toberead / size;	
 }
 
