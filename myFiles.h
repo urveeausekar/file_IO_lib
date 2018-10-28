@@ -11,7 +11,7 @@
 
 #define ENDF -1
 
-enum mode { R = 1, W = 2, A = 3, RP = 4, WP = 5, AP = 6, EOF = -1};
+enum mode {EnOF = -1, R = 1, W = 2, A = 3, RP = 4, WP = 5, AP = 6};
 
 typedef struct myFile{
 	int fd;         /*File descriptor*/
