@@ -22,6 +22,7 @@ int main(int argc, char *argv[]){
 	int r = testFopen();
 	testFread();
 	testFwrite();
+	testFtell();
 	return 0;
 }
 
@@ -215,8 +216,10 @@ int testFread(){
 
 int testFwrite(){
 	File *fr, *fw, *f;
-	char str1[64] = "Richard Phillips Feynman", str2[64], str3[64] = "Richard Phillips Feynman was a great physicist!";
-	int error = 9, i = 0, j = 0;
+	char str1[2000] = "Richard Phillips Feynman", str2[2000], str3[2000] = "Richard Phillips Feynman was a great physicist!";
+	int error = 9, i = 0, j = 0, flag = 0;
+	long ret1;
+	char str4[8] = "AAAAAA", str5[8];
 	
 	printf("TESTING Fwrite\ntesting \"w\" mode\n");
 	fw = Fopen("writetest1", "w");
@@ -224,85 +227,201 @@ int testFwrite(){
 		perror("cant open file\n");
 		return 0;
 	}
-	Fwrite(str1, 1, strlen(str1), fw);
-	Fclose(fw);
-	/*testing Fwrite for writing charachters*/
-	printf("testing with text file\n");
-	fr = Fopen("writetest1", "r");
-	if(fw == NULL){
-		perror("cant open file\n");
-		return 0;
-	}
-	printf("%ld\n", strlen(str1));
-	Fread(str2, 1, 24, fr);
-	str2[24] = '\0';
-	//printf("%s\n", str2);
-	if(strcmp(str1, str2) == 0){
-		printf("Success\n");
-	}
 	else{
-		printf("Failure\n");
-		error = 1;
+		Fwrite(str1, 1, strlen(str1), fw);
+		Fclose(fw);
+		/*testing Fwrite for writing charachters*/
+		printf("testing with text file\n");
+		fr = Fopen("writetest1", "r");
+		if(fw == NULL){
+			perror("cant open file\n");
+			return 0;
+		}
+		printf("%ld\n", strlen(str1));
+		Fread(str2, 1, 24, fr);
+		str2[24] = '\0';
+		Fclose(fr);
+		if(strcmp(str1, str2) == 0){
+			printf("Success\n");
+		}
+		else{
+			printf("Failure\n");
+			error = 1;
+		}
 	}
 	
 	/*testing Fwrite for writing non charachters: here integers*/
-	Fclose(fr);
+	
 	printf("testing with binary file of size greater than buffer\n");
 	fw = Fopen("writetest2", "w");
 	if(fw == NULL){
 		perror("cant open file\n");
 		return 0;
 	}
-	while(i < 300){
-		Fwrite(&i, sizeof(int), 1, fw);
-		i++;
-	}
-	
-	Fclose(fw);
-	fr = Fopen("writetest2", "r");
-	if(fr == NULL){
-		perror("cant open file\n");
-		return 0;
-	}
-	i = 0;
-	error = 0;
-	while(i < 300){
-		Fread(&j, sizeof(int), 1, fr);
-		if(i != j){
-			error = 1;
-			break;
+	else{
+		while(i < 300){
+			Fwrite(&i, sizeof(int), 1, fw);
+			i++;
 		}
-		i++;
-	}
-	if(error == 1){
-		printf("Failure\n");
+		
+		Fclose(fw);
+		fr = Fopen("writetest2", "r");
+		if(fr == NULL){
+			perror("cant open file\n");
+			return 0;
+		}
+		i = 0;
 		error = 0;
+		while(i < 300){
+			Fread(&j, sizeof(int), 1, fr);
+			if(i != j){
+				error = 1;
+				break;
+			}
+			i++;
+		}
+		if(error == 1){
+			printf("Failure\n");
+			error = 0;
+		}
+		else
+			printf("Success\n");
+		Fclose(fr);
 	}
-	else
-		printf("Success\n");
-	Fclose(fr);
 	
 	/*Now testing append mode*/
-	printf("Now testing append mode \"a\"\n");
+	printf("Now testing append mode \"a\", size lesser than buffer\n");
 	strcpy(str1, " was a great physicist!");
 	f = Fopen("writetest1", "a");
-	if(f == NULL){
+	if(f == NULL)
 		perror("cant open file\n");
-		return 0;
+	else{
+		Fwrite(str1, 1, 23, f);
+		Fclose(f);
+		f = Fopen("writetest1", "r");
+		if(f == NULL){
+			perror("cant open file\n");
+			return 0;
+		}
+		Fread(str2, 1, 47, f);
+		str2[47] = '\0';
+		if(strcmp(str2, str3) == 0){
+			printf("Success\n");
+		}
+		else
+			printf("Failure!\n");
+		
 	}
-	Fwrite(str1, 1, 23, f);
-	Fclose(f);
-	f = Fopen("writetest1", "r");
-	if(f == NULL){
+	
+	printf("case Text file greater than buffer\n");
+	f = Fopen("test2", "r");
+	fw = Fopen("writetest1", "a");
+	if(f == NULL || fw == NULL)
 		perror("cant open file\n");
-		return 0;
+	else{
+		ret1 = Fread(str1, 1, 1508, f);
+		str1[ret1] = '\0';
+		Fclose(f);
+		strcat(str2, str1);
+		Fwrite(str1, strlen(str1), 1, fw);
+		Fclose(fw);
+		f = Fopen("writetest1", "r");
+		if(f == NULL){
+			perror(" ");
+			flag = 1;
+		}
+		if(!flag){
+			Fread(str1, 1555, 1, f);
+			str1[1555] = '\0';
+			if(strcmp(str1, str2) == 0)
+				printf("Success\n");
+			else
+				printf("Failure\n");
+		}
+		printf("test case trying to write to a file open in read mode\n");
+		Fseek(f, 0, SEEK_SET);
+		/*Fseek tested later, for this testcase, please assume that fseek works properly*/
+		Fwrite("this is test", 12, 1, f);
+		Fclose(f);
+		f = Fopen("writetest1", "r");
+		if(f == NULL){
+			perror("writetest1 ");
+			flag = 1;
+		}
+		if(!flag){
+			Fread(str1, 1555, 1, f);
+			str1[1555] = '\0';
+			/*str2 holds previous content of file before trying to write*/
+			if(strcmp(str1, str2) == 0 && errno == EBADF)  
+				printf("Success\n"); /*file content remains unmodified and errno set properly*/
+			else
+				printf("Failure\n");
+			Fclose(f);
+		}
+		
+		
 	}
-	Fread(str2, 1, 47, f);
-	str2[47] = '\0';
-	if(strcmp(str2, str3) == 0){
-		printf("Success\n");
+	printf("test case trying to read a file open in write mode\n");
+	f = Fopen("writetest1", "w");
+	if(f == NULL)
+		perror(" ");
+	else{
+		strcpy(str5, str4);
+		Fread(str4, 8, 1, f);
+		/*str5 holds previous content of str4 before trying to read into str4*/
+		if(strcmp(str5, str4) == 0 && errno == EBADF)  
+			printf("Success\n"); /*string content remains unmodified and errno set properly*/
+		else
+			printf("Failure\n");
+		Fclose(f);
 	}
-	else
-		printf("Failure!\n");
+	printf("\n\n");
 	return error;
 }
+
+
+int testFtell(){
+	File *fr, *fw; /*my file functions*/
+	FILE *frs, *fws;/*standard file functions*/
+	char s0[2000], s1[2000];
+	long r1, r2;
+	fr = Fopen("test2", "r");
+	frs = fopen("test2", "r");
+	
+	printf("TESTING Ftell\n");
+	if(fr == NULL || frs == NULL)
+		perror(" ");
+	else{
+		/*beginning of file: offset should be zero*/
+		printf("case:beginning of file\n");
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2 && r1 == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		printf("case:smaller than buffer\n");/*value 12 is small enough to be inside buffer*/
+		Fread(s0, 1, 12, fr);
+		fread(s1, 1, 12, frs);
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		printf("case:larger than buffer\n");
+		Fread(s0, 1, 1495, fr);
+		fread(s1, 1, 1495, frs);
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		Fclose(fr);
+		fclose(frs);
+		
+	}
+	return 1;
+}
+
