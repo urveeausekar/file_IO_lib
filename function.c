@@ -332,8 +332,10 @@ int Fseek(File *fp, long pos, int whence){
 			break;
 	}
 	lseek(fp -> fd, pos, whence);
-	if(fp -> last == 'r')
+	if(fp -> last == 'r'){
+		fp -> left = 0;
 		buffill(fp);//this is new see if works sometime
+	}
 	return 0;
 }
 

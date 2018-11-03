@@ -23,6 +23,8 @@ int main(int argc, char *argv[]){
 	testFread();
 	testFwrite();
 	testFtell();
+	testFseek();
+	testFeof();
 	return 0;
 }
 
@@ -384,6 +386,7 @@ int testFtell(){
 	File *fr, *fw; /*my file functions*/
 	FILE *frs, *fws;/*standard file functions*/
 	char s0[2000], s1[2000];
+	int i = 0, j = 0, k = 0;
 	long r1, r2;
 	fr = Fopen("test2", "r");
 	frs = fopen("test2", "r");
@@ -393,6 +396,7 @@ int testFtell(){
 		perror(" ");
 	else{
 		/*beginning of file: offset should be zero*/
+		printf("case: text file\n");
 		printf("case:beginning of file\n");
 		r1 = Ftell(fr);
 		r2 = ftell (frs);
@@ -422,6 +426,222 @@ int testFtell(){
 		fclose(frs);
 		
 	}
+	/*now testing on binary file*/
+	fr = Fopen("file4", "r");
+	frs = fopen("file4", "r");
+	if(fr == NULL || frs == NULL)
+		perror(" ");
+	else{
+		printf("case: binary file\n");
+		printf("case:beginning of file\n");
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2 && r1 == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		printf("case: offset smaller than size of buffer\n");
+		while(k < 30){
+			Fread(&i, 1, sizeof(int), fr);
+			fread(&j, 1, sizeof(int), frs);
+			k++;
+		}
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2 && r1 == 120)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		printf("case: offset larger than size of buffer\n");
+		while(k < 258){
+			Fread(&i, 1, sizeof(int), fr);
+			fread(&j, 1, sizeof(int), frs);
+			k++;
+		}
+		r1 = Ftell(fr);
+		r2 = ftell (frs);
+		if(r1 == r2 && r1 == 1032)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		Fclose(fr);
+		fclose(frs);
+	
+	}
+	printf("\n\n");
 	return 1;
 }
 
+int testFseek(){
+	printf("TESTING Fseek\n");
+	printf("testing file smaller than buffer size\n");
+	char a[1024], s[32], d[32] = "Stefanie Maria ", g[32] = "aria Steffi Graf (born", e1[16] = "ime list .", e2[16];
+	char e3[32] = "f (born 14 June 1969)", e4[32];
+	File *f = Fopen("test1", "r");
+	int i = 9;
+	char s1[2000], s2[16], s3[16] = "Albert Einstein", s4[32] = "ntum theory, which led to his", s5[32];
+	
+	/*this file is small enough to fit in buffer*/
+	if(f == NULL)
+		perror(" ");
+	else{
+		printf("case:negative position argument for SEEK_SET\n");//do it
+		i = Fseek(f, -10, SEEK_SET);
+		if(i == 1 && errno == EINVAL)
+			printf("Succesfully handled\n");
+		else
+			printf("Test not passed\n"); 
+			
+		printf("case:bad input for argument whence\n");//do it
+		i = Fseek(f, -10, 5);
+		if(i == 1 && errno == EINVAL)
+			printf("Succesfully handled\n");
+		else
+			printf("Test not passed\n"); 
+			
+		printf("testing SEEK_SET\n");
+		Fread(a, 1, 1000, f); 
+		Fseek(f, 0, SEEK_SET);
+		Fread(s, 1, 15, f);
+		s[15] = '\0';
+		if(strcmp(s, d) == 0)
+			printf("Success\n");
+		else 
+			printf("Failure\n");
+		Fseek(f, 10, SEEK_SET);
+		//printf("%d\n", i);
+		Fread(s, 1, 22, f);
+		s[22] = '\0';
+		//printf("s = %s\ng = %s\n", s, g);
+		if(strcmp(s, g) == 0)	
+			printf("Success\n");
+		else 
+			printf("Failure\n");
+			
+			
+		Fseek(f, 0, SEEK_SET);
+		Fread(s, 1, 15, f);
+		s[15] = '\0';
+		if(strcmp(s, d) == 0)
+			printf("Success\n");
+		else 
+			printf("Failure\n");	
+			
+			
+		printf("Testing SEEK_END\n");
+		Fseek(f, -11, SEEK_END);
+		Fread(e2, 1, 10, f);
+		e2[10] = '\0';
+		if(strcmp(e1, e2) == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		
+		printf("Testing SEEK_CUR\n");
+		Fseek(f, 20, SEEK_SET);
+		Fseek(f, 5, SEEK_CUR);
+		Fread(e4, 1, 21, f);	
+		e4[21] = '\0';
+		if(strcmp(e3, e4) == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");	
+		Fclose(f);
+	}
+	
+	f = Fopen("test2", "r");
+	if(f == NULL)
+		perror("test2:");
+	else{
+		printf("testing file larger than buffer size\n");
+		Fread(s1, 1, 1508, f);
+		printf("testing SEEK_SET\n");
+		Fseek(f, 0, SEEK_SET);
+		Fread(s2, 1, 15, f);
+		s2[15] = '\0';
+		if(strcmp(s2, s3) == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		
+		printf("testing SEEK_CUR\n");
+		Fseek(f, 1200, SEEK_CUR);
+		Fread(s5, 1, 30, f);
+		s5[30] = '\0';
+		if(strcmp(s5, s4) == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		
+		printf("Testing SEEK_END\n");
+		Fseek(f, -10, SEEK_END);
+		Fread(s5, 1, 8, f);
+		s5[8] = '\0';
+		if(strcmp(s5, "universe") == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		
+		Fclose(f);
+	}
+	printf("\n\n");
+}
+
+int testFeof(){
+	File *f;
+	FILE *f1;
+	char tes[1024], fromfile[1024], tes2[1024], ch;
+	int i = 0, j = 0, error = 0;
+	
+	printf("TESTING Feof\n");
+	printf("case:file smaller than buffer\n");
+	f = Fopen("test1", "r");
+	f1 = fopen("test1", "r");
+	if(f == NULL || f1 == NULL)
+		perror(" ");
+	else{
+		while(!Feof(f)){
+			Fread(&ch, 1, 1, f);
+			tes[i] = ch;
+			i++;
+		}
+		tes[i] = '\0';
+		Fclose(f);
+		i = 0;
+		while(!feof(f1)){
+			fread(&ch, 1, 1, f1);
+			tes2[i] = ch;
+			i++;
+		}
+		tes2[i] = '\0';
+		if(strcmp(tes, tes2) == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		fclose(f1);
+	}
+	
+	printf("case: binary file larger than buffer\n");
+	f = Fopen("file4", "r");
+	f1 = fopen("file4", "r");
+	if(f == NULL || f1 == NULL)
+		perror(" ");
+	else{
+		while(!Feof(f) || !feof(f1)){
+			Fread(&i, 1, sizeof(int), f);
+			fread(&j, 1, sizeof(int), f1);
+			if(i != j){
+				error = 1;
+				printf("Failure\n");
+				break;
+			}
+		}
+		if(!error)
+			printf("Success\n");
+		fclose(f1);
+		Fclose(f);
+	}
+	
+	printf("\n\n");
+	return 1;
+}
