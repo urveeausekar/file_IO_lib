@@ -645,3 +645,138 @@ int testFeof(){
 	printf("\n\n");
 	return 1;
 }
+
+void testStdinouterr(){
+	char s0[] = "This is test file used to test Fread and Stdin.", s2[64] = "Testing the working of stdout. This should appear on screen.", s1[64];;
+	
+	printf("TESTING Stdin\n");
+	Fread(s1, 1, 47, Stdin);
+	s1[47] = '\0';
+	printf("%s\n", s1);
+	if(strcmp(s0, s1) == 0)
+		printf("Success\n");
+	else
+		printf("Failure\n");
+	
+	printf("Testing Stdout\n");
+	Fwrite(s2, 1, strlen(s2), Stdout);
+	/*stdout buffer gets flushed after fflush*/
+	Fflush(Stdout);
+	printf("\nTesting Stderr\n");
+	Fwrite("writing to stderr is unbuffered. therefore Fflush() is not required.This should print on screen immediately\n", 1, 108, Stderr);
+	printf("\n\n");
+}
+
+int testFgetorsetpos(){
+	File *f;
+	f = Fopen("file4", "r");
+	int arr[10], i, j;
+	char s0[64] = "Neutron stars are the smallest and densest stars", s1[8];
+	Fpos_t st1, st2;
+	
+	printf("TESTING Fgetpos and Fsetpos\n");
+	printf("Testing in read mode\n");
+	/*Now testing in read mode*/
+	if(f == NULL)
+		perror("file3");
+	else{
+		Fgetpos(f, &st1);
+		Fread(arr, sizeof(int), 10, f);
+		Fgetpos(f, &st2);
+		Fsetpos(f, &st1);
+		Fread(&i, sizeof(int), 1, f);
+		Fsetpos(f, &st2);
+		Fread(&j, sizeof(int), 1, f);
+		if(i == 260 && j == 250)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+			
+		Fclose(f);
+	}
+	/*Now testin in write mode*/
+	printf("Testing in write mode\n");
+	f = Fopen("testingF_post", "w");
+	if(f == NULL)
+		perror("testingF_post");
+	else{
+		Fgetpos(f, &st1);
+		Fwrite(s0, 1, strlen(s0), f);
+		Fsetpos(f, &st1);
+		Fwrite("HHH", 1, 3, f);
+		Fclose(f);
+		Fopen("testingF_post", "r");
+		if(f == NULL)
+			perror("testingF_post");
+		else{
+			Fread(s1, 1, 7, f);
+			s1[7] = '\0';
+			if(strcmp(s1, "HHHtron") == 0)
+				printf("Success\n");
+			else
+				printf("Failure\n");
+			Fclose(f);
+		}
+	}
+	printf("\n\n");
+	return 1;
+}
+
+void testPlusmodes(){
+	File *f;
+	char s0[32], s1[8], s2[16];
+	
+	printf("TESTING plusmodes like \"r+\", \"w+\" and \"a+\"\n");
+	/*testing "r+"*/
+	printf("Testing \"r+\"\n");
+	f = Fopen("writetest", "r+");
+	if(f == NULL)
+		perror("");
+	else{
+		Fread(s0, 1, 24, f);
+		s0[24] = '\0';
+		Fseek(f, 0, SEEK_SET);
+		Fwrite("HERE", 1, 4, f);
+		Fseek(f, 0, SEEK_SET);
+		Fread(s0, 1, 24, f);
+		s0[24] = '\0';
+		if(strcmp(s0, "HEREard Phillips Feynman") == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		Fclose(f);
+	}
+	/*testing "w+" */
+	printf("Testing \"w+\"\n");
+	f = Fopen("testwa+", "w+");
+	if(f == NULL)
+		perror("");
+	else{
+		Fwrite("Marie Sklodowska Curie", 1, 22, f);
+		Fseek(f, 0, SEEK_SET);
+		Fread(s1, 1, 5, f);
+		s1[5] = '\0';
+		if(strcmp(s1, "Marie") == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		Fclose(f);
+	}
+	
+	/*testing "a+" */
+	printf("Testing \"a+\"\n");
+	f = Fopen("testwa+", "a+");
+	if(f == NULL)
+		perror("");
+	else{
+		Fwrite("Lise Meitner", 1, 12, f);
+		Fseek(f, -12, SEEK_CUR);
+		Fread(s2, 1, 12, f);
+		s2[12] = '\0';
+		if(strcmp(s2, "Lise Meitner") == 0)
+			printf("Success\n");
+		else
+			printf("Failure\n");
+		Fclose(f);
+	}
+}
