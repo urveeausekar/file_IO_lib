@@ -5,26 +5,30 @@
 
 int testFopen();
 /* for testing the "r" mode */
-int testFread();
+void testFread();
 /* for testing the "w" and "a" mode */
-int testFwrite();
+void testFwrite();
 /*for testing file positioning systems*/
-int testFseek();
-int testFtell();
-int testFgetpos();
-int testFsetpos();
+void testFseek();
+void testFtell();
+/*testing fgetpos and fsetpos*/
+void testFgetorsetpos();
 /*for testing the + modes ie "r+", "w+" and "a+"*/
-int testPlusmodes();
-int testFeof();
+void testPlusmodes();
+void testStdinouterr();
+void testFeof();
 /*above functions will return 1 on success and 0 on failure*/
 
 int main(int argc, char *argv[]){
-	int r = testFopen();
+	testFopen();
 	testFread();
 	testFwrite();
 	testFtell();
 	testFseek();
 	testFeof();
+	testFgetorsetpos();
+	testPlusmodes();
+	testStdinouterr();
 	return 0;
 }
 
@@ -99,10 +103,10 @@ int testFopen(){
 }
 
 /*function to test read action in all readable modes*/
-int testFread(){
+void testFread(){
 	File *f; /*my implementation of file functions*/
 	FILE *fs; /* standard implementation of file functions*/
-	int error = 0, ar1[512], ar2[512];
+	int error = 0;
 	char str1[2000], str2[2000];
 	unsigned long ret1 = 10, ret2 = 10;
 	int i = -7, j, k = 0;
@@ -112,14 +116,14 @@ int testFread(){
 	f = Fopen("test1", "r");
 	fs = fopen("test1", "r");
 	if(f == NULL || fs == NULL){
-		perror("cant open file\n");
-		//write which error in some file?
+		perror("test1:cant open file\n");
+		
 		error = 1;
 	}
 	else{
 		ret1 = Fread(str1, 1, 1000, f);
 		ret2 = fread(str2, 1, 1000, fs);
-		printf("ret1 = %lu ret2 = %lu\n", ret1, ret2);
+		//printf("ret1 = %lu ret2 = %lu\n", ret1, ret2);
 		str1[ret1] = '\0';
 		str2[ret2] = '\0';
 		Fclose(f);
@@ -129,7 +133,7 @@ int testFread(){
 		else{
 			printf("Failure: some error occured\n");
 			error = 1;
-			return 0;
+		
 		}
 	}
 		
@@ -137,7 +141,7 @@ int testFread(){
 	f = Fopen("test2", "r");
 	fs = fopen("test2", "r");
 	if(f == NULL || fs == NULL){
-		perror("cant open file\n");
+		perror("test2:cant open file\n");
 	}
 	else{
 		ret1 = Fread(str1, 1, 1508, f);
@@ -151,7 +155,7 @@ int testFread(){
 		else{
 			printf("Failure: some error occured\n");
 			error = 1;
-			return 0;
+		
 		}
 	}
 	
@@ -159,8 +163,7 @@ int testFread(){
 	f = Fopen("file3", "rb");/*rb mode handled same as r mode in linux*/
 	fs = fopen("file3", "r");
 	if(f == NULL || fs == NULL){
-		perror("cant open file\n");
-		return 0;
+		perror("file3:cant open file\n");
 	}
 	else{
 		while(i < 15){
@@ -187,8 +190,8 @@ int testFread(){
 	f = Fopen("file4", "r");
 	fs = fopen("file4", "r");
 	if(f == NULL || fs == NULL){
-		perror("cant open file\n");
-		return 0;
+		perror("file4:cant open file\n");
+
 	}
 	else{
 		while(k < 260){
@@ -213,10 +216,9 @@ int testFread(){
 		printf("\n\n");
 	}
 	
-	return 1;
 }
 
-int testFwrite(){
+void testFwrite(){
 	File *fr, *fw, *f;
 	char str1[2000] = "Richard Phillips Feynman", str2[2000], str3[2000] = "Richard Phillips Feynman was a great physicist!";
 	int error = 9, i = 0, j = 0, flag = 0;
@@ -226,8 +228,8 @@ int testFwrite(){
 	printf("TESTING Fwrite\ntesting \"w\" mode\n");
 	fw = Fopen("writetest1", "w");
 	if(fw == NULL){
-		perror("cant open file\n");
-		return 0;
+		perror("writetest1:cant open file\n");
+		
 	}
 	else{
 		Fwrite(str1, 1, strlen(str1), fw);
@@ -236,19 +238,21 @@ int testFwrite(){
 		printf("testing with text file\n");
 		fr = Fopen("writetest1", "r");
 		if(fw == NULL){
-			perror("cant open file\n");
-			return 0;
-		}
-		printf("%ld\n", strlen(str1));
-		Fread(str2, 1, 24, fr);
-		str2[24] = '\0';
-		Fclose(fr);
-		if(strcmp(str1, str2) == 0){
-			printf("Success\n");
+			perror("writetest1:cant open file\n");
+		
 		}
 		else{
-			printf("Failure\n");
-			error = 1;
+			
+			Fread(str2, 1, 24, fr);
+			str2[24] = '\0';
+			Fclose(fr);
+			if(strcmp(str1, str2) == 0){
+				printf("Success\n");
+			}
+			else{
+				printf("Failure\n");
+				error = 1;
+			}
 		}
 	}
 	
@@ -257,8 +261,8 @@ int testFwrite(){
 	printf("testing with binary file of size greater than buffer\n");
 	fw = Fopen("writetest2", "w");
 	if(fw == NULL){
-		perror("cant open file\n");
-		return 0;
+		perror("writetest2:cant open file\n");
+
 	}
 	else{
 		while(i < 300){
@@ -269,57 +273,60 @@ int testFwrite(){
 		Fclose(fw);
 		fr = Fopen("writetest2", "r");
 		if(fr == NULL){
-			perror("cant open file\n");
-			return 0;
+			perror("writetest2:cant open file\n");
+			
 		}
-		i = 0;
-		error = 0;
-		while(i < 300){
-			Fread(&j, sizeof(int), 1, fr);
-			if(i != j){
-				error = 1;
-				break;
-			}
-			i++;
-		}
-		if(error == 1){
-			printf("Failure\n");
+		else{
+			i = 0;
 			error = 0;
+			while(i < 300){
+				Fread(&j, sizeof(int), 1, fr);
+				if(i != j){
+					error = 1;
+					break;
+				}
+				i++;
+			}
+			if(error == 1){
+				printf("Failure\n");
+				error = 0;
+			}
+			else
+				printf("Success\n");
+			Fclose(fr);
 		}
-		else
-			printf("Success\n");
-		Fclose(fr);
 	}
 	
 	/*Now testing append mode*/
-	printf("Now testing append mode \"a\", size lesser than buffer\n");
+	printf("Now testing append mode \"a\"\n size lesser than buffer\n");
 	strcpy(str1, " was a great physicist!");
 	f = Fopen("writetest1", "a");
 	if(f == NULL)
-		perror("cant open file\n");
+		perror("writetest1:cant open file\n");
 	else{
 		Fwrite(str1, 1, 23, f);
 		Fclose(f);
 		f = Fopen("writetest1", "r");
 		if(f == NULL){
-			perror("cant open file\n");
-			return 0;
-		}
-		Fread(str2, 1, 47, f);
-		str2[47] = '\0';
-		if(strcmp(str2, str3) == 0){
-			printf("Success\n");
-		}
-		else
-			printf("Failure!\n");
+			perror("writetest1:cant open file\n");
 		
+		}
+		else{
+			Fread(str2, 1, 47, f);
+			str2[47] = '\0';
+			if(strcmp(str2, str3) == 0){
+				printf("Success\n");
+			}
+			else
+				printf("Failure!\n");
+		}
 	}
 	
 	printf("case Text file greater than buffer\n");
 	f = Fopen("test2", "r");
 	fw = Fopen("writetest1", "a");
 	if(f == NULL || fw == NULL)
-		perror("cant open file\n");
+		perror("either test2 or writetest1 failed to open\n");
 	else{
 		ret1 = Fread(str1, 1, 1508, f);
 		str1[ret1] = '\0';
@@ -329,7 +336,7 @@ int testFwrite(){
 		Fclose(fw);
 		f = Fopen("writetest1", "r");
 		if(f == NULL){
-			perror(" ");
+			perror("writetest1: ");
 			flag = 1;
 		}
 		if(!flag){
@@ -378,13 +385,13 @@ int testFwrite(){
 		Fclose(f);
 	}
 	printf("\n\n");
-	return error;
+
 }
 
 
-int testFtell(){
-	File *fr, *fw; /*my file functions*/
-	FILE *frs, *fws;/*standard file functions*/
+void testFtell(){
+	File *fr; /*my file functions*/
+	FILE *frs;/*standard file functions*/
 	char s0[2000], s1[2000];
 	int i = 0, j = 0, k = 0;
 	long r1, r2;
@@ -393,7 +400,7 @@ int testFtell(){
 	
 	printf("TESTING Ftell\n");
 	if(fr == NULL || frs == NULL)
-		perror(" ");
+		perror("test2:");
 	else{
 		/*beginning of file: offset should be zero*/
 		printf("case: text file\n");
@@ -430,7 +437,7 @@ int testFtell(){
 	fr = Fopen("file4", "r");
 	frs = fopen("file4", "r");
 	if(fr == NULL || frs == NULL)
-		perror(" ");
+		perror("file4: ");
 	else{
 		printf("case: binary file\n");
 		printf("case:beginning of file\n");
@@ -469,21 +476,20 @@ int testFtell(){
 	
 	}
 	printf("\n\n");
-	return 1;
 }
 
-int testFseek(){
+void testFseek(){
 	printf("TESTING Fseek\n");
 	printf("testing file smaller than buffer size\n");
 	char a[1024], s[32], d[32] = "Stefanie Maria ", g[32] = "aria Steffi Graf (born", e1[16] = "ime list .", e2[16];
 	char e3[32] = "f (born 14 June 1969)", e4[32];
 	File *f = Fopen("test1", "r");
-	int i = 9;
-	char s1[2000], s2[16], s3[16] = "Albert Einstein", s4[32] = "ntum theory, which led to his", s5[32];
+	int i = 9, k, err = 0;
+	char s1[2000], s2[16], s3[16] = "Albert Einstein", s4[32] = "ntum theory, which led to his", s5[32], ch, fend[8];
 	
 	/*this file is small enough to fit in buffer*/
 	if(f == NULL)
-		perror(" ");
+		perror("test1:can't open file");
 	else{
 		printf("case:negative position argument for SEEK_SET\n");//do it
 		i = Fseek(f, -10, SEEK_SET);
@@ -512,7 +518,7 @@ int testFseek(){
 		//printf("%d\n", i);
 		Fread(s, 1, 22, f);
 		s[22] = '\0';
-		//printf("s = %s\ng = %s\n", s, g);
+		
 		if(strcmp(s, g) == 0)	
 			printf("Success\n");
 		else 
@@ -566,8 +572,8 @@ int testFseek(){
 		
 		printf("testing SEEK_CUR\n");
 		Fseek(f, 1200, SEEK_CUR);
-		Fread(s5, 1, 30, f);
-		s5[30] = '\0';
+		Fread(s5, 1, 29, f);
+		s5[29] = '\0';
 		if(strcmp(s5, s4) == 0)
 			printf("Success\n");
 		else
@@ -584,13 +590,45 @@ int testFseek(){
 		
 		Fclose(f);
 	}
+	
+	printf("Case: setting offset beyond end of file\n");
+	f = Fopen("testfseek", "w");
+	if(f == NULL)
+		perror("testfseek:");
+	else{
+		Fwrite("Neutron stars are the densest stars", 1, 35, f);
+		Fseek(f, 5, SEEK_END);
+		Fwrite("HERE", 1, 4, f);
+		Fclose(f);
+		f = Fopen("testfseek", "r");
+		if(f == NULL)
+			perror("testfseek:");
+		else{
+			Fseek(f, 35, SEEK_SET);
+			for(k = 0; k < 5; k++){
+				Fread(&ch, 1, 1, f);
+				if(ch != '\0'){
+					err = 1;
+					break;
+				}
+			}
+			Fread(fend, 1, 4, f);
+			fend[4] = '\0';
+			if(err == 1 || strcmp(fend, "HERE") != 0)
+				printf("Failure\n");
+			else
+				printf("Success\n");
+			Fclose(f);
+		}
+	}
+	
 	printf("\n\n");
 }
 
-int testFeof(){
+void testFeof(){
 	File *f;
 	FILE *f1;
-	char tes[1024], fromfile[1024], tes2[1024], ch;
+	char tes[1024], tes2[1024], ch;
 	int i = 0, j = 0, error = 0;
 	
 	printf("TESTING Feof\n");
@@ -598,7 +636,7 @@ int testFeof(){
 	f = Fopen("test1", "r");
 	f1 = fopen("test1", "r");
 	if(f == NULL || f1 == NULL)
-		perror(" ");
+		perror("test1:can't open file ");
 	else{
 		while(!Feof(f)){
 			Fread(&ch, 1, 1, f);
@@ -625,7 +663,7 @@ int testFeof(){
 	f = Fopen("file4", "r");
 	f1 = fopen("file4", "r");
 	if(f == NULL || f1 == NULL)
-		perror(" ");
+		perror("file4 ");
 	else{
 		while(!Feof(f) || !feof(f1)){
 			Fread(&i, 1, sizeof(int), f);
@@ -643,7 +681,7 @@ int testFeof(){
 	}
 	
 	printf("\n\n");
-	return 1;
+	
 }
 
 void testStdinouterr(){
@@ -667,7 +705,7 @@ void testStdinouterr(){
 	printf("\n\n");
 }
 
-int testFgetorsetpos(){
+void testFgetorsetpos(){
 	File *f;
 	f = Fopen("file4", "r");
 	int arr[10], i, j;
@@ -678,7 +716,7 @@ int testFgetorsetpos(){
 	printf("Testing in read mode\n");
 	/*Now testing in read mode*/
 	if(f == NULL)
-		perror("file3");
+		perror("file4:");
 	else{
 		Fgetpos(f, &st1);
 		Fread(arr, sizeof(int), 10, f);
@@ -719,7 +757,6 @@ int testFgetorsetpos(){
 		}
 	}
 	printf("\n\n");
-	return 1;
 }
 
 void testPlusmodes(){
@@ -731,7 +768,7 @@ void testPlusmodes(){
 	printf("Testing \"r+\"\n");
 	f = Fopen("writetest", "r+");
 	if(f == NULL)
-		perror("");
+		perror("writetest:");
 	else{
 		Fread(s0, 1, 24, f);
 		s0[24] = '\0';
@@ -750,7 +787,7 @@ void testPlusmodes(){
 	printf("Testing \"w+\"\n");
 	f = Fopen("testwa+", "w+");
 	if(f == NULL)
-		perror("");
+		perror("testwa+:");
 	else{
 		Fwrite("Marie Sklodowska Curie", 1, 22, f);
 		Fseek(f, 0, SEEK_SET);
@@ -767,7 +804,7 @@ void testPlusmodes(){
 	printf("Testing \"a+\"\n");
 	f = Fopen("testwa+", "a+");
 	if(f == NULL)
-		perror("");
+		perror("testwa+:");
 	else{
 		Fwrite("Lise Meitner", 1, 12, f);
 		Fseek(f, -12, SEEK_CUR);
@@ -779,4 +816,5 @@ void testPlusmodes(){
 			printf("Failure\n");
 		Fclose(f);
 	}
+	printf("\n\n");
 }

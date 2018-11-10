@@ -36,10 +36,10 @@ typedef struct Fpos_t{
 File *Fopen(const char *path, const char *mode);
 unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp);
 unsigned long Fwrite(void *ptr, unsigned long size, unsigned long nmem, File *fp);
-int bufflush(File *fp);
 int Fclose(File *fp);
 long Ftell(File *fp);
 int Fseek(File *fp, long pos, int whence);
 int Feof(File *fp);
 int Fsetpos(File *fp, Fpos_t *position);
 int Fgetpos(File *fp, Fpos_t *position);
+int Fflush(File *fp);

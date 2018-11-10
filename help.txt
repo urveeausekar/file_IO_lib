@@ -1,0 +1,6 @@
+URLs from which help was taken:
+
+https://en.wikibooks.org/wiki/C_Programming/stdio.h/fopen
+https://www.gnu.org/software/libc/manual/html_node/Stream-Buffering.html
+https://www.geeksforgeeks.org/data-type-file-c/
+
