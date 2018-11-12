@@ -16,7 +16,7 @@ File *Fopen(const char *path, const char *mode){
 
 	
 	for(fp = ptrarr + 3 ; fp < ptrarr + MAXOPEN; fp++, i++){
-		if(/*fp -> flag == EnOF || */(fp -> buf == NULL && fp -> next == NULL && fp -> flag == 0 && fp -> left == 0 && fp -> bufornot != 'u' && fp -> last == '\0'))
+		if(fp -> buf == NULL && fp -> next == NULL && fp -> flag == 0 && fp -> left == 0 && fp -> bufornot != 'u' && fp -> last == '\0')
 			/*Empty slot found*/
 			break;
 	}
@@ -38,11 +38,11 @@ File *Fopen(const char *path, const char *mode){
 			break;
 		case 'w':
 			if(*(mode + 1) == '\0' || (*(mode + 1) == 'b' && *(mode + 2) == '\0')){
-				fd = open(path, O_WRONLY | O_CREAT | O_TRUNC/*, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH*/);
+				fd = open(path, O_WRONLY | O_CREAT | O_TRUNC);
 				fp -> flag = W;
 			}
 			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == 'b' && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
-				fd = open(path, O_RDWR | O_CREAT | O_TRUNC/*, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH*/);
+				fd = open(path, O_RDWR | O_CREAT | O_TRUNC);
 				fp -> flag = WP;
 			}
 			else
@@ -50,11 +50,11 @@ File *Fopen(const char *path, const char *mode){
 			break;
 		case 'a':
 			if(*(mode + 1) == '\0' || (*(mode + 1) == 'b' && *(mode + 2) == '\0')){
-				fd = open(path, O_WRONLY | O_CREAT | O_APPEND/*, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH*/);
+				fd = open(path, O_WRONLY | O_CREAT | O_APPEND);
 				fp -> flag = A;
 			}
 			else if((*(mode + 1) == '+' && *(mode + 2) == '\0') || (*(mode + 1) == 'b' && *(mode + 2) == '+' && *(mode + 3) == '\0') || (*(mode + 1) == '+' && *(mode + 2) == 'b' && *(mode + 3) == '\0')){
-				fd = open(path, O_RDWR | O_CREAT | O_APPEND/*, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH*/);
+				fd = open(path, O_RDWR | O_CREAT | O_APPEND);
 				fp -> flag = AP;
 			}
 			else
@@ -160,7 +160,7 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 	
 	if(fp -> left == 0 || fp -> buf == NULL)
 		 r = buffill(fp);
-	if(/*r == INT_MIN || */fp -> flag == EnOF){
+	if(fp -> flag == EnOF){
 		return 0;
 	}
 		
@@ -186,9 +186,7 @@ unsigned long Fread(void *ptr, unsigned long size, unsigned long nmem, File *fp)
 		if(fp -> left < toberead)
 			toberead = fp -> left;
 	}
-	/*if(fp -> left - toberead < BUFSIZE - r){
-		toberead = fp -> left - (BUFSIZE - r); no need
-	}*/
+	
 	tr = memmove(ptr, fp -> next, toberead);
 	fp -> next = fp -> next + toberead;
 	fp -> left = fp -> left - toberead;
@@ -219,7 +217,7 @@ unsigned long Fwrite(void *ptr, unsigned long size, unsigned long nmem, File *fp
 	}
 	if(fp -> buf == NULL || fp -> left == 0){
 		i = bufflush(fp);
-		if(/*i == INT_MIN || */fp -> flag == EnOF)
+		if(fp -> flag == EnOF)
 			return 0;
 	}
 	if(fp -> bufornot == 'u'){
@@ -301,7 +299,7 @@ int Fseek(File *fp, long pos, int whence){
 			return 0;
 		}
 		if(fp -> last == 'w' && pos > 0 && pos < fp -> left){
-			memset(fp -> next, '\0', pos);// * sizeof(pos));
+			memset(fp -> next, '\0', pos);
 			fp -> next = fp -> next + pos;
 			fp -> left = fp -> left - pos;
 		
@@ -333,7 +331,7 @@ int Fseek(File *fp, long pos, int whence){
 	lseek(fp -> fd, pos, whence);
 	if(fp -> last == 'r'){
 		fp -> left = 0;
-		buffill(fp);//this is new
+		buffill(fp);
 		
 	}
 	return 0;
