@@ -17,7 +17,7 @@ void testFgetorsetpos();
 void testPlusmodes();
 void testStdinouterr();
 void testFeof();
-/*above functions will return 1 on success and 0 on failure*/
+
 
 int main(int argc, char *argv[]){
 	testFopen();
