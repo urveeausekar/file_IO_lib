@@ -123,7 +123,7 @@ void testFread(){
 	else{
 		ret1 = Fread(str1, 1, 1000, f);
 		ret2 = fread(str2, 1, 1000, fs);
-		//printf("ret1 = %lu ret2 = %lu\n", ret1, ret2);
+		
 		str1[ret1] = '\0';
 		str2[ret2] = '\0';
 		Fclose(f);
@@ -491,14 +491,14 @@ void testFseek(){
 	if(f == NULL)
 		perror("test1:can't open file");
 	else{
-		printf("case:negative position argument for SEEK_SET\n");//do it
+		printf("case:negative position argument for SEEK_SET\n");
 		i = Fseek(f, -10, SEEK_SET);
 		if(i == 1 && errno == EINVAL)
 			printf("Succesfully handled\n");
 		else
 			printf("Test not passed\n"); 
 			
-		printf("case:bad input for argument whence\n");//do it
+		printf("case:bad input for argument whence\n");
 		i = Fseek(f, -10, 5);
 		if(i == 1 && errno == EINVAL)
 			printf("Succesfully handled\n");
@@ -515,7 +515,7 @@ void testFseek(){
 		else 
 			printf("Failure\n");
 		Fseek(f, 10, SEEK_SET);
-		//printf("%d\n", i);
+		
 		Fread(s, 1, 22, f);
 		s[22] = '\0';
 		
